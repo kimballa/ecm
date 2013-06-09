@@ -1,6 +1,4 @@
-@(message: Option[String])
-
-@import gremblor.ecm.mtgox.MtGoxTicker
+@(message: Option[String], ticker: com.xeiam.xchange.dto.marketdata.Ticker)
 @import com.xeiam.xchange.dto.marketdata.Ticker
 
 @main("Gremblor Heavy Industries") {
@@ -16,8 +14,11 @@
   }
 
   <div class="row"><div class="span12">MtGox live:</div></div>
+  <div class="row"><div class="span12">
+    @ticker.getTradableIdentifier() in @ticker.getLast().getCurrencyUnit().toString()
+    as of @ticker.getTimestamp()
+  </div></div>
   <div class="row">
-    <div class="span1">Time</div>
     <div class="span1">Last</div>
     <div class="span1">Bid</div>
     <div class="span1">Ask</div>
@@ -25,15 +26,10 @@
     <div class="span1">Close</div>
   </div>
   <div class="row">
-  @{
-    val mtGoxTicker: MtGoxTicker = new MtGoxTicker
-    val ticker: Ticker = mtGoxTicker.getQuote()
-    <div class="span1">{ticker.getTimestamp()}</div>
-    <div class="span1">{ticker.getLast()}</div>
-    <div class="span1">{ticker.getBid()}</div>
-    <div class="span1">{ticker.getAsk()}</div>
-    <div class="span1">{ticker.getHigh()}</div>
-    <div class="span1">{ticker.getLow().toString()}</div>
-  }
+    <div class="span1">@ticker.getLast()</div>
+    <div class="span1">@ticker.getBid()</div>
+    <div class="span1">@ticker.getAsk()</div>
+    <div class="span1">@ticker.getHigh()</div>
+    <div class="span1">@ticker.getLow().toString()</div>
   </div>
 }
