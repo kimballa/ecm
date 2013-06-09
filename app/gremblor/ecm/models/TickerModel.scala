@@ -60,7 +60,7 @@ case class TickerModel(id: Long,
    * @return the BigMoney representing the value and currency.
    */
   private def toMoney(value: BigDecimal, currency: String): BigMoney = {
-    BigMoney.of(CurrencyUnit.of(currency), value)
+    BigMoney.of(CurrencyUnit.of(currency.trim()), value)
   }
 }
 
