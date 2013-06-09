@@ -52,6 +52,27 @@ case class TickerModel(id: Long,
         .build()
   }
 
+  override def equals(that: Any): Boolean = {
+    that match {
+      case t: TickerModel => {
+        timestamp.equals(t.timestamp) &&
+            tradeSymbol == t.tradeSymbol &&
+            quoteSymbol == t.quoteSymbol &&
+            bid.equals(t.bid) &&
+            ask.equals(t.ask) &&
+            high.equals(t.high) &&
+            low.equals(t.low) &&
+            volume.equals(t.volume) &&
+            last.equals(t.last)
+      }
+      case _ => false
+    }
+  }
+
+  override def hashCode(): Int = {
+    timestamp.hashCode ^ tradeSymbol.hashCode ^ bid.hashCode ^ volume.hashCode ^ last.hashCode
+  }
+
   /**
    * Convert a BigDecimal and a currency unit to a joda BigMoney.
    *
@@ -79,7 +100,8 @@ object TickerModel {
     get[BigDecimal]("volume") ~
     get[BigDecimal]("last") map {
       case id ~ timestamp ~ tradeSymbol ~ quoteSymbol ~ bid ~ ask ~ high ~ low ~ volume ~ last =>
-          TickerModel(id, timestamp, tradeSymbol, quoteSymbol, bid, ask, high, low, volume, last)
+          TickerModel(id, timestamp, tradeSymbol.trim(), quoteSymbol.trim(),
+              bid, ask, high, low, volume, last)
     }
   }
 

@@ -4,23 +4,24 @@ import play.api._
 import play.api.mvc._
 
 import gremblor.ecm.models.TickerModel
-import gremblor.ecm.mtgox.MtGoxTicker
 import com.xeiam.xchange.dto.marketdata.Ticker
 
 object Application extends Controller {
 
   def index = Action {
-    val mtGoxTicker: MtGoxTicker = new MtGoxTicker
-    val ticker: Ticker = mtGoxTicker.getQuote()
-
-    // Save the current ticker value.
-    TickerModel.create(ticker)
-
     val recentQuotes: List[TickerModel] = TickerModel.recent(30)
     val recentTickers: List[Ticker] = recentQuotes.map( model => model.toTicker() )
 
+    val curTicker: Ticker = (
+      if (recentTickers.isEmpty) {
+        Ticker.TickerBuilder.newInstance().build() }
+      else {
+        recentTickers.head
+      }
+    )
+
     // And render the page with the current ticker symbol.
-    Ok(gremblor.ecm.views.html.index(None, ticker, recentTickers))
+    Ok(gremblor.ecm.views.html.index(None, curTicker, recentTickers))
   }
 
 }

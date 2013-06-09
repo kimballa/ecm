@@ -7,11 +7,11 @@
 hostname ecm.gremblor.com
 
 # Set up postgresql server.
-apt-get install postgresql-client-common postgresql-server-dev-9.1 \
+apt-get -y install postgresql-client-common postgresql-server-dev-9.1 \
     postgresql-client-9.1 postgresql
 
 # Get some other tools we need.
-apt-get install git-core maven
+apt-get -y install git-core maven lighttpd
 
 # Set up all user accounts. We don't need no stinkin' ActiveDirectory here...
 addgroup --gid 5001 ecmweb
@@ -38,5 +38,11 @@ if [ ! -L "/var/lib/postgresql" ]; then
   ln -s /data/var/lib/postgresql/ /var/lib/postgresql
 fi
 
+if [ ! -L "/etc/lighttpd" ]; then
+  rm -rf /etc/lighttpd
+  ln -s /data/etc/lighttpd/ /etc/lighttpd
+fi
+
 service postgresql start
+service lighttpd start
 

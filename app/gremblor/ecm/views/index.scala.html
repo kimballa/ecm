@@ -18,7 +18,40 @@
   <div class="row"><div class="span12">
     <h4>@curTicker.getTradableIdentifier() in @curTicker.getLast().getCurrencyUnit().toString()
     as of @curTicker.getTimestamp(): @curTicker.getLast()</h4>
+    Bid: @curTicker.getBid() | Ask: @curTicker.getAsk() | High: @curTicker.getHigh()
+      | Low: @curTicker.getLow()
   </div></div>
+
+  @* Candlestick chart of recent price movement *@
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load('visualization', '1', {packages: ['corechart']});
+  </script>
+  <script type="text/javascript">
+    function drawVisualization() {
+      var data = google.visualization.arrayToDataTable([
+        [ 'Timestamp', 'Bid', 'Last', 'Ask' ],
+        @recentTickers.map { ticker =>
+          [ '@ticker.getTimestamp',
+            @ticker.getBid().getAmount(),
+            @ticker.getLast().getAmount(),
+            @ticker.getAsk().getAmount()
+          ],
+        }
+      ]);
+
+      var options = {
+        title: 'MtGox BTCUSD'
+      };
+
+      var chart = new google.visualization.LineChart(
+        document.getElementById('btcusd_chart_div'));
+      chart.draw(data, options);
+    }
+
+    google.setOnLoadCallback(drawVisualization);
+  </script>
+  <div id="btcusd_chart_div" style="width: 900px; height: 500px;"></div>
   <div class="row">
     <div class="span1">Time</div>
     <div class="span1">Last</div>
