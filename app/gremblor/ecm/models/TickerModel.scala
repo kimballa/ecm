@@ -9,6 +9,8 @@ import anorm._
 import anorm.SqlParser._
 
 import com.xeiam.xchange.dto.marketdata.Ticker
+import org.joda.money.BigMoney
+import org.joda.money.CurrencyUnit
 
 import play.api.db._
 import play.api.Play.current
@@ -29,7 +31,38 @@ case class TickerModel(id: Long,
     high: BigDecimal,
     low: BigDecimal,
     volume: BigDecimal,
-    last: BigDecimal)
+    last: BigDecimal) {
+
+
+  /**
+   * Deserializes this TickerModel into an xeiam Ticker.
+   *
+   * @return an xeiam Ticker representing this data.
+   */
+  def toTicker(): Ticker = {
+    Ticker.TickerBuilder.newInstance()
+        .withBid(toMoney(bid, quoteSymbol))
+        .withAsk(toMoney(ask, quoteSymbol))
+        .withHigh(toMoney(high, quoteSymbol))
+        .withLow(toMoney(low, quoteSymbol))
+        .withVolume(volume)
+        .withLast(toMoney(last, quoteSymbol))
+        .withTradableIdentifier(tradeSymbol)
+        .withTimestamp(timestamp)
+        .build()
+  }
+
+  /**
+   * Convert a BigDecimal and a currency unit to a joda BigMoney.
+   *
+   * @param value the amount of money.
+   * @param currency the string representing the currency identifier.
+   * @return the BigMoney representing the value and currency.
+   */
+  private def toMoney(value: BigDecimal, currency: String): BigMoney = {
+    BigMoney.of(CurrencyUnit.of(currency), value)
+  }
+}
 
 object TickerModel {
 
@@ -54,6 +87,17 @@ object TickerModel {
     SQL("SELECT * FROM ticker").as(tickerModel *)
   }
 
+  /**
+   * Get the most recent 'max' ticker values.
+   *
+   * @param max the maximum number of values to return
+   * @return a list of ticker values in descending timestamp order.
+   */
+  def recent(max: Int): List[TickerModel] = DB.withConnection { implicit c =>
+    SQL("SELECT * FROM ticker ORDER BY timestamp DESC LIMIT {max}").on(
+      'max -> max).as(tickerModel *)
+  }
+
   def create(inputTicker: com.xeiam.xchange.dto.marketdata.Ticker) {
     DB.withConnection { implicit c =>
       SQL("""
@@ -64,7 +108,7 @@ object TickerModel {
         |""".stripMargin).on(
           'timestamp -> inputTicker.getTimestamp(),
           'tradeSymbol -> inputTicker.getTradableIdentifier(),
-          'quoteSymbol -> inputTicker.getBid().getCurrencyUnit().toString(),
+          'quoteSymbol -> inputTicker.getBid().getCurrencyUnit().getCode(),
           'bid -> inputTicker.getBid().getAmount(),
           'ask -> inputTicker.getAsk().getAmount(),
           'high -> inputTicker.getHigh().getAmount(),

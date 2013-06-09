@@ -1,4 +1,5 @@
-@(message: Option[String], ticker: com.xeiam.xchange.dto.marketdata.Ticker)
+@(message: Option[String], curTicker: com.xeiam.xchange.dto.marketdata.Ticker,
+    recentTickers: List[com.xeiam.xchange.dto.marketdata.Ticker])
 @import com.xeiam.xchange.dto.marketdata.Ticker
 
 @main("Gremblor Heavy Industries") {
@@ -9,27 +10,31 @@
     // Display any optional message text in a div at the top.
     message match {
       case None => ""
-      case Some(str) => <div><em>str</em></div>
+      case Some(str) => <div><em>@str</em></div>
     }
   }
 
   <div class="row"><div class="span12">MtGox live:</div></div>
   <div class="row"><div class="span12">
-    @ticker.getTradableIdentifier() in @ticker.getLast().getCurrencyUnit().toString()
-    as of @ticker.getTimestamp()
+    <h4>@curTicker.getTradableIdentifier() in @curTicker.getLast().getCurrencyUnit().toString()
+    as of @curTicker.getTimestamp(): @curTicker.getLast()</h4>
   </div></div>
   <div class="row">
+    <div class="span1">Time</div>
     <div class="span1">Last</div>
     <div class="span1">Bid</div>
     <div class="span1">Ask</div>
     <div class="span1">Open</div>
     <div class="span1">Close</div>
   </div>
-  <div class="row">
-    <div class="span1">@ticker.getLast()</div>
-    <div class="span1">@ticker.getBid()</div>
-    <div class="span1">@ticker.getAsk()</div>
-    <div class="span1">@ticker.getHigh()</div>
-    <div class="span1">@ticker.getLow().toString()</div>
-  </div>
+  @recentTickers.map { ticker =>
+    <div class="row">
+      <div class="span1">@ticker.getTimestamp()</div>
+      <div class="span1">@ticker.getLast()</div>
+      <div class="span1">@ticker.getBid()</div>
+      <div class="span1">@ticker.getAsk()</div>
+      <div class="span1">@ticker.getHigh()</div>
+      <div class="span1">@ticker.getLow().toString()</div>
+    </div>
+  }
 }

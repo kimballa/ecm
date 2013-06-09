@@ -16,8 +16,11 @@ object Application extends Controller {
     // Save the current ticker value.
     TickerModel.create(ticker)
 
+    val recentQuotes: List[TickerModel] = TickerModel.recent(30)
+    val recentTickers: List[Ticker] = recentQuotes.map( model => model.toTicker() )
+
     // And render the page with the current ticker symbol.
-    Ok(gremblor.ecm.views.html.index(None, ticker))
+    Ok(gremblor.ecm.views.html.index(None, ticker, recentTickers))
   }
 
 }
