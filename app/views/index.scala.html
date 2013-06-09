@@ -1,7 +1,14 @@
-@(message: String)
+@(message: Option[String])
 
-@main("Welcome to Play 2.1") {
-    
-    @play20.welcome(message)
-    
+@main("Gremblor Heavy Industries") {
+  <h2>Gremblor Heavy Industries</h2>
+  <h3>Electronic Currency Trading Platform</h3>
+
+  @{
+    // Display any optional message text in a div at the top.
+    message match {
+      case None => ""
+      case Some(str) => <div><em>str</em></div>
+    }
+  }
 }
