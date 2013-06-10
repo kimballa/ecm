@@ -17,6 +17,9 @@ apt-get -y install git-core maven lighttpd
 addgroup --gid 5001 ecmweb
 adduser --home /data/home/ecmweb --shell /bin/bash --uid=5001 --gid 5001 --system ecmweb
 
+addgroup --gid 5002 ecmroot
+adduser --home /data/home/ecmroot --shell /bin/bash --uid=5002 --gid 5002 --system ecmroot
+
 # Attach the data drive
 mkdir /data
 mount /dev/xvdb /data
