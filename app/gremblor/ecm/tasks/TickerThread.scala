@@ -13,12 +13,12 @@ class TickerThread extends Thread {
   /** isRunning is true as long as the thread should be active. */
   private var mIsRunning: Boolean = true
 
-  /** Polling interval (3 seconds) */
-  private val mUpdateInterval: Int = 2000
+  /** Polling interval (2.5 seconds) */
+  private val mUpdateInterval: Int = 2500
 
-  /** REST API client that reads a ticker from MtGox. */
-  private val mtGoxTicker: MtGoxTicker = new MtGoxTicker
 
+  /** Ticker lifetime (start a new high/low window) in milliseconds. */
+  private val mTickerLifetime: Int = 120000
 
   /** Tell the thread loop to shut down. */
   def shutdownTickers(): Unit = {
@@ -44,7 +44,18 @@ class TickerThread extends Thread {
   override def run(): Unit = {
     var isRunning: Boolean = this.synchronized { mIsRunning }
     var prevTicker: Option[Ticker] = None
+
+    var mtGoxTicker: MtGoxTicker = new MtGoxTicker
+    var tickerStartTime: Long = System.currentTimeMillis
+
     while (isRunning) {
+      val curTime: Long = System.currentTimeMillis
+      if (curTime - tickerStartTime > mTickerLifetime) {
+        // Close the current ticker instance and start a new one.
+        mtGoxTicker = new MtGoxTicker
+        tickerStartTime = curTime
+      }
+
       // Get the most recent value and save it.
       val ticker: Ticker = mtGoxTicker.getQuote()
 
@@ -60,7 +71,7 @@ class TickerThread extends Thread {
       prevTicker = Some(ticker)
 
       Thread.sleep(mUpdateInterval)
-      var isRunning = this.synchronized { mIsRunning }
+      isRunning = this.synchronized { mIsRunning }
     }
   }
 }

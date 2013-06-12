@@ -15,6 +15,7 @@
   }
 
   <div class="row"><div class="span12">MtGox live:</div></div>
+  <div class="row"><div class="span12">Current time: @((new java.util.Date).toString())</div></div>
   <div class="row"><div class="span12">
     <h4>@curTicker.getTradableIdentifier() in @curTicker.getLast().getCurrencyUnit().toString()
     as of @curTicker.getTimestamp(): @curTicker.getLast()</h4>
@@ -31,7 +32,7 @@
     function drawVisualization() {
       var data = google.visualization.arrayToDataTable([
         [ 'Timestamp', 'Bid', 'Last', 'Ask' ],
-        @recentTickers.map { ticker =>
+        @recentTickers.reverse.map { ticker =>
           [ '@ticker.getTimestamp',
             @ticker.getBid().getAmount(),
             @ticker.getLast().getAmount(),
