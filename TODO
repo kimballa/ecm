@@ -1,0 +1,15 @@
+
+
+* Get all trade data, not just ticker
+* Ticker should record receiveTimestamp as well as sendTimestamp
+* class TimeSeries (dataset, fromTime, toTime, granularity)
+** granularity should be either 'raw' or smooth it to seconds/minutes/hours/days
+** add bollinger band functions...
+* with trade data, add a vwap function
+* Implement BollingerBandOversoldStrategy
+* MonteCarloBacktest
+* Add more logging
+* Add models for Account, Trade, Lot
+
+* Purse and Order models need to be persisted.
+
