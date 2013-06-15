@@ -6,8 +6,12 @@ import gremblor.ecm.models.TickerModel
 import gremblor.ecm.mtgox.MtGoxTicker
 import com.xeiam.xchange.dto.marketdata.Ticker
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class TickerThread extends Thread {
+  private val LOG: Logger = LoggerFactory.getLogger(classOf[TickerThread])
+
   setDaemon(true)
 
   /** isRunning is true as long as the thread should be active. */
@@ -19,14 +23,6 @@ class TickerThread extends Thread {
 
   /** Ticker lifetime (start a new high/low window) in milliseconds. */
   private val mTickerLifetime: Int = 120000
-
-  /** Tell the thread loop to shut down. */
-  def shutdownTickers(): Unit = {
-    this.synchronized {
-      mIsRunning = false
-      this.interrupt()
-    }
-  }
 
   /** @reutrn true if the tickers are equal. */
   private def equalTickers(t1: Ticker, t2: Ticker): Boolean = {
@@ -48,6 +44,7 @@ class TickerThread extends Thread {
     var mtGoxTicker: MtGoxTicker = new MtGoxTicker
     var tickerStartTime: Long = System.currentTimeMillis
 
+    LOG.debug("Started TickerThread")
     while (isRunning) {
       val curTime: Long = System.currentTimeMillis
       if (curTime - tickerStartTime > mTickerLifetime) {
@@ -65,7 +62,8 @@ class TickerThread extends Thread {
 
       if (doUpdate) {
         // Save the current ticker value since it's new.
-        TickerModel.create(ticker)
+        LOG.debug("New ticker from TickerThread: " + ticker)
+        TickerModel.createAndSave(ticker)
       }
 
       prevTicker = Some(ticker)

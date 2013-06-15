@@ -4,6 +4,7 @@ package gremblor.ecm.models
 
 import java.math.BigDecimal
 import java.util.Date
+import java.util.NoSuchElementException
 
 import anorm._
 import anorm.SqlParser._
@@ -105,8 +106,24 @@ object TickerModel {
     }
   }
 
+  /** Return a list of all TickerModel objects. */
   def all(): List[TickerModel] = DB.withConnection { implicit c =>
     SQL("SELECT * FROM ticker").as(tickerModel *)
+  }
+
+  /** Return the number of TickerModel objects in the database. */
+  def count(): Long = DB.withConnection { implicit c =>
+    val firstRow = SQL("SELECT COUNT(*) AS cnt FROM ticker").apply().head
+    firstRow[Long]("cnt")
+  }
+
+  /** Return the first TickerModel we can find in the database, or None. */
+  def any(): Option[TickerModel] = DB.withConnection { implicit c =>
+    try {
+      Some(SQL("SELECT * FROM ticker LIMIT 1").as(tickerModel *).head)
+    } catch {
+      case nsee: NoSuchElementException => { None }
+    }
   }
 
   /**
@@ -120,7 +137,10 @@ object TickerModel {
       'max -> max).as(tickerModel *)
   }
 
-  def create(inputTicker: com.xeiam.xchange.dto.marketdata.Ticker) {
+  /**
+   * Create a new TickerModel and persist it to the database.
+   */
+  def createAndSave(inputTicker: com.xeiam.xchange.dto.marketdata.Ticker) {
     DB.withConnection { implicit c =>
       SQL("""
         | INSERT INTO ticker (timestamp, tradeSymbol, quoteSymbol, bid, ask, high, low,
