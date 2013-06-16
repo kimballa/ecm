@@ -11,9 +11,10 @@ import org.joda.money.BigMoney
 import org.joda.money.CurrencyUnit
 
 import gremblor.ecm.models.TickerModel
+import gremblor.ecm.mtgox.MtGoxTickerPollingEngine
+import gremblor.ecm.mtgox.MtGoxFastTickerEngine
 import gremblor.ecm.tasks.ExecutorEngine
 import gremblor.ecm.tasks.StrategyEngine
-import gremblor.ecm.tasks.TickerPollingEngine
 import gremblor.ecm.tasks.WishfulThinkingTradingEngine
 
 /** Application-global settings and initialization. */
@@ -30,7 +31,8 @@ object Global extends GlobalSettings {
    */
   private def getEngines(): List[ExecutorEngine] = {
     List(
-      new TickerPollingEngine() // Use the xeiam MtGox polling API.
+      new MtGoxTickerPollingEngine, // Use the xeiam MtGox polling API.
+      new MtGoxFastTickerEngine // Use the MtGox JSON fast ticker API.
     )
   }
 

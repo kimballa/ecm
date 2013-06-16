@@ -26,6 +26,9 @@ import gremblor.ecm.util.ExceptionUtils._
  * instance will be created, and the task will be restarted. This is the default behavior;
  * you may override isAutoRestart() to return false if you do not want this behavior.</p>
  *
+ * <p>Before restarting the task, this will pause for restartDelay() millis. This defaults
+ * to 1000 millis (1 second). You can override this.</p>
+ *
  * <p>If you override shutdown() to include any service-specific shutdown
  * functions (like adding an interrupt() call), you must call super.shutdown()
  * first. ExecutorEngine.shutdown() will synchronize on the current object;
@@ -58,7 +61,13 @@ abstract class ExecutorEngine {
    * Return true if Runnables should be recreated and re-executed if they exit abnormally.
    * You may override this method to return false. It will only be called once.
    */
-  protected def isAutoRestart() = { true }
+  protected def isAutoRestart(): Boolean = { true }
+
+  /**
+   * Return the number of milliseconds to wait before restarting a task. You may override
+   * this value. Defaults to 1000 (1 second).
+   */
+  protected def restartDelay(): Int = { 1000 }
 
   /** User-supplied method to instantiate a Runnable to submit to the ExecutorService. */
   def runnableInstance: Runnable
@@ -97,7 +106,7 @@ abstract class ExecutorEngine {
       // If it throws anything, we log what's thrown.
       // If mAutoRestart was initialized to true, we then go from the top, resubmitting the
       // user's run() call after initializing a new runnableInstance
-      do {
+      while (true) {
         try {
           val theRunnable = runnableInstance // get a Runnable from the user-supplied method.
           LOG.debug("Launching Runnable instance: " + theRunnable.toString())
@@ -109,7 +118,18 @@ abstract class ExecutorEngine {
             LOG.error(stackTraceToString(throwable))
           }
         }
-      } while (mAutoRestart)
+
+        if (!mAutoRestart) {
+          // Nothing further to do.
+          return
+        }
+
+        // Wait and then restart the task
+        val myRestartDelay: Int = restartDelay()
+        if (myRestartDelay > 0) {
+          Thread.sleep(myRestartDelay)
+        }
+      }
     }
   }
 }

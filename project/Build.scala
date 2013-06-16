@@ -14,7 +14,8 @@ object ApplicationBuild extends Build {
     // https://github.com/timmolter/XChange
     "com.xeiam.xchange" % "xchange-core" % "1.7.0",
     "com.xeiam.xchange" % "xchange-mtgox" % "1.7.0",
-    "postgresql" % "postgresql" % "9.1-901-1.jdbc4"
+    "postgresql" % "postgresql" % "9.1-901-1.jdbc4",
+    "org.scalaj" %% "scalaj-http" % "0.3.7"
   )
 
 

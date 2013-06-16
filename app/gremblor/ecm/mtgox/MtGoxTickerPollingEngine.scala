@@ -1,25 +1,26 @@
 // Copyright 2013 Gremblor Heavy Industries
 
-package gremblor.ecm.tasks
+package gremblor.ecm.mtgox
 
-import gremblor.ecm.models.TickerModel
-import gremblor.ecm.mtgox.MtGoxTicker
 import com.xeiam.xchange.dto.marketdata.Ticker
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import gremblor.ecm.models.TickerModel
+import gremblor.ecm.tasks.ExecutorEngine
+
 /**
- * Executor-based engine that runs a polling loop to check for tickers from MtGox.
+ * Executor-based engine that runs a polling loop to check for tickers from MtGox
+ * using the xeiam library.
  */
-class TickerPollingEngine extends ExecutorEngine {
-  private val LOG: Logger = LoggerFactory.getLogger(classOf[TickerPollingEngine])
+class MtGoxTickerPollingEngine extends ExecutorEngine {
+  private val LOG: Logger = LoggerFactory.getLogger(classOf[MtGoxTickerPollingEngine])
 
-  override def runnableInstance = new TickerPollingRunnable
+  override def runnableInstance: Runnable = new TickerPollingRunnable
 
-  /** Polling interval (2.5 seconds) */
-  private val mUpdateInterval: Int = 2500
-
+  /** Polling interval (5 seconds) */
+  private val mUpdateInterval: Int = 5000
 
   /** Ticker lifetime (start a new high/low window) in milliseconds. */
   private val mTickerLifetime: Int = 120000
@@ -37,14 +38,14 @@ class TickerPollingEngine extends ExecutorEngine {
   }
 
   /** Main thread loop. Poll for ticker update info. */
-  class TickerPollingRunnable extends Runnable {
+  private class TickerPollingRunnable extends Runnable {
     override def run(): Unit = {
       var prevTicker: Option[Ticker] = None
 
       var mtGoxTicker: MtGoxTicker = new MtGoxTicker
       var tickerStartTime: Long = System.currentTimeMillis
 
-      LOG.debug("Started TickerPollingRunnable: polling for updates.")
+      LOG.debug("Started MtGox main ticker listener: polling for updates.")
       while (!isShutdown()) {
         try {
           val curTime: Long = System.currentTimeMillis
@@ -58,12 +59,13 @@ class TickerPollingEngine extends ExecutorEngine {
           val ticker: Ticker = mtGoxTicker.getQuote()
 
           // If the ticker appears to be the same as the previously-retrieved value, skip it.
-          // Under some circumstances (e.g., server restart), this may still record duplicate entries.
+          // Under some circumstances (e.g., server restart), this may still record duplicate
+          // entries.
           val doUpdate = prevTicker.isEmpty || !equalTickers(prevTicker.get, ticker)
 
           if (doUpdate) {
             // Save the current ticker value since it's new.
-            LOG.debug("New ticker from TickerThread: " + ticker)
+            LOG.debug("New ticker from MtGox TickerPollingEngine: " + ticker)
             TickerModel.createAndSave(ticker)
           }
 
