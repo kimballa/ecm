@@ -53,7 +53,8 @@ class MtGoxFastTickerEngine extends ExecutorEngine {
     override def run(): Unit = {
       var prevTicker: Option[Ticker] = None
 
-      var tickerStartTime: Long = System.currentTimeMillis
+      var lastSlowPoll: Long = System.currentTimeMillis // Time we last got a full ticker.
+      var mostRecentFullTicker: Ticker = (new MtGoxTicker).getQuote()
 
       LOG.debug("Started MtGox fast ticker listener: polling for updates.")
       while (!isShutdown()) {
@@ -61,11 +62,11 @@ class MtGoxFastTickerEngine extends ExecutorEngine {
           // Get the most recent fast quote from MtGox.
           val fastTickerJson = Http(mFastTickerUrl).asString
 
-          // Get the most recent "full" ticker model from the database to populate vol/high/low.
-          // TODO: Switch to the latest "real" ticker from the slow poll event pipe; otherwise
-          // since our timestamps can be ahead of theirs, we might not pick up the latest true
-          // high/low/volume.
-          val mostRecentFullTicker: Ticker = TickerModel.recent(1).head.toTicker
+          val curTime: Long = System.currentTimeMillis
+          if (curTime - lastSlowPoll > 60000) {
+            // Every minute, update our slow-poll data.
+            mostRecentFullTicker = (new MtGoxTicker).getQuote()
+          }
 
           val latestFastTicker: Ticker = parse(fastTickerJson, mostRecentFullTicker)
 

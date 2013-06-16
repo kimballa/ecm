@@ -19,8 +19,8 @@ class MtGoxTickerPollingEngine extends ExecutorEngine {
 
   override def runnableInstance: Runnable = new TickerPollingRunnable
 
-  /** Polling interval (5 seconds) */
-  private val mUpdateInterval: Int = 5000
+  /** Polling interval (30 seconds) */
+  private val mUpdateInterval: Int = 30000
 
   /** Ticker lifetime (start a new high/low window) in milliseconds. */
   private val mTickerLifetime: Int = 120000
