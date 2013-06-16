@@ -20,9 +20,8 @@ I believe there is anywhere from 5 seconds to 2 minutes of delay across the feed
 
 * Get all trade data, not just ticker
 * Ticker should record receiveTimestamp as well as sendTimestamp
-* class TimeSeries (dataset, fromTime, toTime, granularity)
-** granularity should be either 'raw' or smooth it to seconds/minutes/hours/days
-** add bollinger band functions...
+* add SMA and bollinger band functions...
+** visualize BBand(ticker.last, 20, 2)
 * with trade data, add a vwap function
 * Implement BollingerBandOversoldStrategy
 * MonteCarloBacktest

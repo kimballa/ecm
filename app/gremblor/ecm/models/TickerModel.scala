@@ -16,6 +16,9 @@ import org.joda.money.CurrencyUnit
 import play.api.db._
 import play.api.Play.current
 
+import gremblor.ecm.data.TimeGranularity
+import gremblor.ecm.data.TimeSeries
+
 /**
  * Represents the ticker information for a tradeable item.
  *
@@ -124,6 +127,62 @@ object TickerModel {
     } catch {
       case nsee: NoSuchElementException => { None }
     }
+  }
+
+  /**
+   * Return the postgresql aggregate function to use for smoothing a given column.
+   */
+  private def aggregateFuncForCol(colName: String): String = {
+    colName match {
+      case "last" => "AVG"
+      case "bid" => "AVG"
+      case "ask" => "AVG"
+      case "low" => "MIN"
+      case "high" => "MAX"
+      case _ => throw new RuntimeException("Cannot get time series of ticker col: " + colName)
+    }
+  }
+
+  /**
+   * Return a List of TickerModel objects that represent tickers for the smoothed values
+   * of all columns over the time range and granularity specified.
+   */
+  def smoothedTimeSeries(start: Date, end: Date, granularity: TimeGranularity): List[TickerModel] =
+      DB.withConnection { implicit c =>
+
+    // Convert colName and granularity into components of the SQL statement to generate.
+    val dateTruncArg: String = TimeGranularity.sqlDateTruncArg(granularity)
+
+    SQL("SELECT 0 as id, DATE_TRUNC(" + dateTruncArg + ", timestamp) AS timestamp, " +
+        "'BTC' AS tradeSymbol, 'USD' AS quoteSymbol, AVG(bid) AS bid, AVG(ask) AS ask, " +
+        "MAX(high) AS high, MIN(low) AS low, AVG(volume) AS volume, AVG(last) AS last " +
+        "FROM ticker " +
+        "WHERE timestamp >= {start} AND timestamp < {end} " +
+        "GROUP BY DATE_TRUNC(" + dateTruncArg + ", timestamp) ORDER BY timestamp")
+        .on("start" -> start).on("end" -> end).as(tickerModel *)
+  }
+
+
+  /**
+   * Return a TimeSeries containing smoothed values for a given column of the tickers.
+   */
+  def columnTimeSeries(start: Date, end: Date, granularity: TimeGranularity, colName: String)
+      : TimeSeries = DB.withConnection { implicit c =>
+
+    // Convert colName and granularity into components of the SQL statement to generate.
+    val aggregateFn: String = aggregateFuncForCol(colName)
+    val dateTruncArg: String = TimeGranularity.sqlDateTruncArg(granularity)
+
+    val rows = SQL("SELECT DATE_TRUNC(" + dateTruncArg + ", timestamp) AS ts, " +
+        aggregateFn + "(" + colName + " ) AS series FROM ticker " +
+        "WHERE timestamp >= {start} AND timestamp < {end} " +
+        "GROUP BY ts ORDER BY ts").on("start" -> start).on("end" -> end).apply()
+
+    // Return a TimeSeries object.
+    TimeSeries.of(
+        granularity,
+        // For each returned row, extract (ts, series) and convert the stream to a list.
+        (rows.map { row => (row[Date]("ts"), row[BigDecimal]("series")) }).toList)
   }
 
   /**

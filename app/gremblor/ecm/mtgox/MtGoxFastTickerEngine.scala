@@ -32,8 +32,8 @@ class MtGoxFastTickerEngine extends ExecutorEngine {
 
   private val mFastTickerUrl: String = "http://data.mtgox.com/api/2/BTCUSD/money/ticker_fast"
 
-  /** Polling interval (1 second) */
-  private val mUpdateInterval: Int = 1000
+  /** Polling interval (2 seconds) */
+  private val mUpdateInterval: Int = 2000
 
   /** @reutrn true if the tickers are equal. */
   private def equalTickers(t1: Ticker, t2: Ticker): Boolean = {

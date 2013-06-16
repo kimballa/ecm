@@ -1,5 +1,8 @@
 @(message: Option[String], curTicker: com.xeiam.xchange.dto.marketdata.Ticker,
-    recentTickers: List[com.xeiam.xchange.dto.marketdata.Ticker])
+    lastHourTickers: List[com.xeiam.xchange.dto.marketdata.Ticker],
+    lastWeekTickers: List[com.xeiam.xchange.dto.marketdata.Ticker]
+    )
+
 @import com.xeiam.xchange.dto.marketdata.Ticker
 
 @main("Gremblor Heavy Industries") {
@@ -23,16 +26,16 @@
       | Low: @curTicker.getLow()
   </div></div>
 
-  @* Candlestick chart of recent price movement *@
+  
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   <script type="text/javascript">
     google.load('visualization', '1', {packages: ['corechart']});
   </script>
   <script type="text/javascript">
-    function drawVisualization() {
+    function drawLastHourChart() {
       var data = google.visualization.arrayToDataTable([
         [ 'Timestamp', 'Bid', 'Last', 'Ask' ],
-        @recentTickers.reverse.map { ticker =>
+        @lastHourTickers.map { ticker =>
           [ '@ticker.getTimestamp',
             @ticker.getBid().getAmount(),
             @ticker.getLast().getAmount(),
@@ -42,17 +45,42 @@
       ]);
 
       var options = {
-        title: 'MtGox BTCUSD'
+        title: 'MtGox BTCUSD Previous Hour (1-minute)'
       };
 
       var chart = new google.visualization.LineChart(
-        document.getElementById('btcusd_chart_div'));
+        document.getElementById('btcusd_chart_div_hour'));
       chart.draw(data, options);
     }
 
-    google.setOnLoadCallback(drawVisualization);
+    function drawLastWeekChart() {
+      var data = google.visualization.arrayToDataTable([
+        [ 'Timestamp', 'Bid', 'Last', 'Ask' ],
+        @lastWeekTickers.map { ticker =>
+          [ '@ticker.getTimestamp',
+            @ticker.getBid().getAmount(),
+            @ticker.getLast().getAmount(),
+            @ticker.getAsk().getAmount()
+          ],
+        }
+      ]);
+
+      var options = {
+        title: 'MtGox BTCUSD Previous Week (hourly)'
+      };
+
+      var chart = new google.visualization.LineChart(
+        document.getElementById('btcusd_chart_div_week'));
+      chart.draw(data, options);
+    }
+
+    google.setOnLoadCallback(drawLastHourChart);
+    google.setOnLoadCallback(drawLastWeekChart);
   </script>
-  <div id="btcusd_chart_div" style="width: 900px; height: 500px;"></div>
+
+  <div id="btcusd_chart_div_hour" style="width: 1000; height: 500px;"></div>
+
+  <div id="btcusd_chart_div_week" style="width: 1000; height: 500px;"></div>
   <div class="row">
     <div class="span1">Time</div>
     <div class="span1">Last</div>
@@ -61,7 +89,7 @@
     <div class="span1">Open</div>
     <div class="span1">Close</div>
   </div>
-  @recentTickers.map { ticker =>
+  @lastHourTickers.map { ticker =>
     <div class="row">
       <div class="span1">@ticker.getTimestamp()</div>
       <div class="span1">@ticker.getLast()</div>
