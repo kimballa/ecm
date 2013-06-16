@@ -5,7 +5,6 @@ package gremblor.ecm.mtgox
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
 
 import com.xeiam.xchange.Exchange
 import com.xeiam.xchange.ExchangeFactory
@@ -28,9 +27,15 @@ import gremblor.ecm.models.TickerModel
 /**
  * Data source that continuously listens to MtGox for quotes, trades, etc.
  *
- * TODO(aaron): Make a singleton object.
+ * TODO(aaron): Make this extend ExecutorEngine
+ * Note: From 6/14--6/16 it didn't seem like this was working. This is not used for now.
  */
 class MtGoxStreamingDataSource {
+
+  throw new RuntimeException(
+      "Streaming Data Source is disabled and should really be an ExecutorEngine")
+
+
   private val LOG: Logger = LoggerFactory.getLogger(classOf[MtGoxStreamingDataSource])
 
   private val mMtGoxExchange: Exchange = ExchangeFactory.INSTANCE.createExchange(

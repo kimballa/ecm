@@ -1,5 +1,24 @@
 
 
+It seems as though MtGox exposes REST API data through a few channels:
+* http://data.mtgox.com/api/2/BTCUSD/money/ticker
+* http://data.mtgox.com/api/2/BTCUSD/money/ticker_fast
+
+The price data updates asynchronously across the two of them and there can be several
+seconds of skew. They both have a "now"
+attribute which will advertise the server timestamp when the ticker value was posted.
+
+I believe there is anywhere from 5 seconds to 2 minutes of delay across the feeds.
+
+* Scrape both of these feeds and use whichever one has a newer timestamp at any point
+  in time
+
+* If the ticker timestamp skews too far behind the current time, the TradingEngine
+  should refuse to trade based on the information? Or maybe leave it to the Strategy.
+
+* Implement a rudimentary no-op StrategyEngine and TradingEngine API
+  .. implement the WishfulThinkingTradingEngine stub.
+
 * Get all trade data, not just ticker
 * Ticker should record receiveTimestamp as well as sendTimestamp
 * class TimeSeries (dataset, fromTime, toTime, granularity)
@@ -13,3 +32,10 @@
 
 * Purse and Order models need to be persisted.
 
+
+Monitor the order submission queue lag:
+http://data.mtgox.com/api/2/BTCUSD/money/order/lag
+
+... don't submit trades if this is excessive (> 3 seconds)
+
+read all of this: https://bitbucket.org/nitrous/mtgox-api/overview

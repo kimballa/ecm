@@ -10,14 +10,29 @@ import com.xeiam.xchange.dto.marketdata.Ticker
 import org.joda.money.BigMoney
 import org.joda.money.CurrencyUnit
 
-import gremblor.ecm.mtgox.MtGoxStreamingDataSource
 import gremblor.ecm.models.TickerModel
-import gremblor.ecm.tasks.TickerThread
+import gremblor.ecm.tasks.ExecutorEngine
+import gremblor.ecm.tasks.StrategyEngine
+import gremblor.ecm.tasks.TickerPollingEngine
+import gremblor.ecm.tasks.WishfulThinkingTradingEngine
 
 /** Application-global settings and initialization. */
 object Global extends GlobalSettings {
 
-  private var mDataSource: Option[MtGoxStreamingDataSource] = None
+  // trade strategy engine that receives input data and acts on it.
+  private var mStrategyEngine: Option[StrategyEngine] = None
+
+  /** Set of ExecutorEngines to start and stop with the app. */
+  private var mExecutorEngines: Option[List[ExecutorEngine]] = None
+
+  /**
+   * To be called by onStart(); initializes a list of ExecutorEngines to run.
+   */
+  private def getEngines(): List[ExecutorEngine] = {
+    List(
+      new TickerPollingEngine() // Use the xeiam MtGox polling API.
+    )
+  }
 
   /**
    * Startup function called as the app begins.
@@ -28,10 +43,12 @@ object Global extends GlobalSettings {
 
     bootstrapDatabase()
 
-    // Retrieve market information in background threads.
-    mDataSource = Some(new MtGoxStreamingDataSource)
-    val tickerThread = new TickerThread()
-    tickerThread.start
+    // Create various engine instances. These automatically start background threads.
+
+    // Create the strategy engine to accept input data.
+    mStrategyEngine = Some(new StrategyEngine(new WishfulThinkingTradingEngine))
+
+    mExecutorEngines = Some(getEngines())
   }
 
   /**
@@ -39,6 +56,7 @@ object Global extends GlobalSettings {
    */
   private def bootstrapDatabase(): Unit = {
     // There must be at least one BTC price point in the database.
+    // TODO(aaron): Poll for the latest real value, not just a zero.
     val maybeTicker: Option[TickerModel] = TickerModel.any
     if (!maybeTicker.isDefined) {
       val ticker: Ticker = Ticker.TickerBuilder.newInstance()
@@ -56,8 +74,10 @@ object Global extends GlobalSettings {
   }
 
   override def onStop(app: Application) {
-    if (mDataSource.isDefined) {
-      mDataSource.get.shutdown()
+    if (mExecutorEngines.isDefined) {
+      mExecutorEngines.get.foreach { engine : ExecutorEngine =>
+        engine.shutdown()
+      }
     }
     super.onStop(app)
   }
