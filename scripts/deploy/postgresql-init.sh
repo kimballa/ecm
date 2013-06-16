@@ -5,4 +5,5 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ecm TO ecm"
 sudo -u postgres psql -c "CREATE USER ecmroot WITH PASSWORD 'ecmMasterKey'"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ecm TO ecmroot"
 sudo -u postgres psql ecm -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ecmroot"
+sudo -u postgres psql ecm -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ecmroot"
 
